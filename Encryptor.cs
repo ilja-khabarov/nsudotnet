@@ -96,13 +96,14 @@ namespace Enigma
                 {
                     using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
                     {
-                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                        //using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
                         {
 
                             //Write all data to the stream.
                             using (FileStream fs = File.OpenRead(filename))
                             {
                                 fs.CopyTo(csEncrypt);
+
                             /*
                                 byte[] b = new byte[256];
                                 UTF8Encoding temp = new UTF8Encoding(true);
@@ -118,15 +119,16 @@ namespace Enigma
                             }
                             //swEncrypt.Write(filename);
                         }
-                        //encrypted = msEncrypt.ToArray();
+                    //csEncrypt.FlushFinalBlock();
+                    //encrypted = msEncrypt.ToArray();
                     /*
                         using (FileStream encryptedDataDFileStream = File.OpenWrite(encryptedFile))
                         {
                             encryptedDataDFileStream.Write(encrypted, 0, encrypted.Length);
                         }
                         */
-                    }
-                    msEncrypt.Close();
+                }
+                    //msEncrypt.Close();
                 }
 
 
@@ -150,7 +152,7 @@ namespace Enigma
             // Declare the string used to hold
             // the decrypted text.
             string plaintext = null;
-            byte[] outBytes = null;
+            byte[] outBytes = new byte[128];
             int gotFromDecoder = 0;
             int offset = 0;
 
@@ -165,21 +167,35 @@ namespace Enigma
                 ICryptoTransform decryptor = symmetricAlgorithm.CreateDecryptor(symmetricAlgorithm.Key, symmetricAlgorithm.IV);
 
             // Create the streams used for decryption.
-            //using (MemoryStream msDecrypt = new MemoryStream(encryptedFile))
+
             File.Delete(outfile);
 
-// there some black magic figures
-            using (FileStream outFileStream = File.OpenWrite(outfile))
+            // there some black magic figures
+
+            //using (MemoryStream msDecrypt = new MemoryStream(encryptedFile))
+            using (FileStream inputStream = File.Open(encryptedFile, FileMode.OpenOrCreate))
+            //using (FileStream outFileStream = File.OpenWrite(outfile))
             {
                 //using ( MemoryStream outFileStream = new MemoryStream())
-                using (CryptoStream csDecrypt = new CryptoStream(outFileStream, decryptor, CryptoStreamMode.Read))
+                using (CryptoStream csDecrypt = new CryptoStream(inputStream, decryptor, CryptoStreamMode.Read))
                 {
+
+                    //using (FileStream inputStream = File.OpenRead(encryptedFile))
                     
-                    using (FileStream inputStream = File.OpenRead(encryptedFile))
+                    using (FileStream outFileStream = File.Open(outfile, FileMode.OpenOrCreate))
                     {
                         //using (StreamWriter srDecrypt = new StreamWriter(csDecrypt))
                         {
-                            inputStream.CopyTo(csDecrypt);
+                            csDecrypt.CopyTo(outFileStream);
+                            //inputStream.CopyTo(csDecrypt);
+                            //csDecrypt.FlushFinalBlock();
+                            /*while ((gotFromDecoder = outFileStream.Read(outBytes, 0, 128)) > 0)
+                            {
+                                outFileStream.Write(outBytes, offset, gotFromDecoder);
+                                offset += gotFromDecoder;
+                            }*/
+
+
                             // Read the decrypted bytes from the decrypting stream
                             // and place them in a string.
                             //plaintext = srDecrypt.ReadToEnd();
@@ -191,8 +207,10 @@ namespace Enigma
                         offset += gotFromDecoder;
                     }*/
                     }
-                    Console.Write(outFileStream.ToString());
+                    //Console.Write(outFileStream.ToString());
+                    //csDecrypt.FlushFinalBlock();
                 }
+
                 
             }
 
