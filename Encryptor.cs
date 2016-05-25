@@ -13,56 +13,68 @@ namespace Enigma
 {
     class Encryptor
     {
-        static string original = "here s some data to encrypt";
-        static string filename = "C:/Users/ilja/Documents/Visual Studio 2015/Projects/Enigma/ToEncrypt.txt";
-        static string encryptedFile = "C:/Users/ilja/Documents/Visual Studio 2015/Projects/Enigma/encrypted";
-        private static string outfile = "C:/Users/ilja/Documents/Visual Studio 2015/Projects/Enigma/out.txt";
-        public static void Encrypt() 
+        //static string original = "here s some data to encrypt";
+        //static string filename = "C:/Users/ilja/Documents/Visual Studio 2015/Projects/Enigma/ToEncrypt.txt";
+        //static string encryptedFile = "C:/Users/ilja/Documents/Visual Studio 2015/Projects/Enigma/encrypted";
+        //private static string outfile = "C:/Users/ilja/Documents/Visual Studio 2015/Projects/Enigma/out.txt";
+        public static void Encrypt(string[] args) 
         {
             try
             {
-
-                //byte[] buf = new byte[128];
-                /*
-                FileStream inputStream = File.OpenRead(filename);
-                while (inputStream.Read(buf, 0, 128) > 0)
-                    Console.Write(buf.ToString());
-                    */
-
-                /*
-            using (FileStream fs = File.OpenRead(filename))
-            {
-                byte[] b = new byte[256];
-                UTF8Encoding temp = new UTF8Encoding(true);
-                int got;
-
-                while ( (got = fs.Read(b, 0, b.Length)) > 0)
+                SymmetricAlgorithm symmetricAlgorithm;
+                switch (args[3])
                 {
-
-                    Console.WriteLine(temp.GetString(b,0,got));
+                    case "rc2":
+                        symmetricAlgorithm = RC2.Create();
+                        break;
+                    case "aes":
+                        symmetricAlgorithm = Aes.Create();
+                        break;
+                    case "des":
+                        symmetricAlgorithm = DES.Create();
+                        break;
+                    case "rij":
+                        symmetricAlgorithm = Rijndael.Create();
+                        break;
+                    default:
+                        symmetricAlgorithm = Aes.Create();
+                        break;
+                }
+                if (args[0] == "encrypt")
+                {
+                    string filename = args[1];
+                    string encryptedFile = args[3];
+                    EncryptStringToBytes(filename, encryptedFile, symmetricAlgorithm.Key, symmetricAlgorithm.IV, symmetricAlgorithm);
+                    string key = Convert.ToBase64String(symmetricAlgorithm.Key);
+                    string IV = Convert.ToBase64String(symmetricAlgorithm.IV);
+                    using (FileStream keyStream = File.OpenWrite("key.txt"))
+                    {
+                        using (StreamWriter writer = new StreamWriter(keyStream))
+                        {
+                            writer.WriteLine(key);
+                            writer.WriteLine(IV);
+                        }
+                    }
 
                 }
-            }
-            */
-
-                // Create a new instance of the Aes
-                // class.  This generates a new key and initialization 
-                // vector (IV).
-                using (SymmetricAlgorithm symmetricAlgorithm = DES.Create())
-                //using (SymmetricAlgorithm myAes = Aes.Create())
-                //using (Aes myAes = Aes.Create())
+                if (args[0] == "decrypt")
                 {
+                    string encryptedFile = args[1];
+                    string outfile = args[4];
+                    using (FileStream keyStream = File.OpenRead(args[3]))
+                    {
+                        using (StreamReader keyReader= new StreamReader(keyStream))
+                        {
+                            symmetricAlgorithm.Key = Convert.FromBase64String(keyReader.ReadLine());
+                            symmetricAlgorithm.IV = Convert.FromBase64String(keyReader.ReadLine());
+                        }
+                    }
 
-                    // Encrypt the string to an array of bytes.
-                    EncryptStringToBytes(filename, symmetricAlgorithm.Key, symmetricAlgorithm.IV, symmetricAlgorithm);
-
-                    // Decrypt the bytes to a string.
-                    DecryptStringFromBytes(encryptedFile, symmetricAlgorithm.Key, symmetricAlgorithm.IV, symmetricAlgorithm);
-
-                    //Display the original data and the decrypted data.
-                    Console.WriteLine("Original:   {0}", original);
-                    //Console.WriteLine("Round Trip: {0}", roundtrip);
+                    DecryptStringFromBytes(encryptedFile, outfile, symmetricAlgorithm.Key, symmetricAlgorithm.IV, symmetricAlgorithm);
                 }
+
+
+
 
             }
             catch (Exception e)
@@ -70,7 +82,7 @@ namespace Enigma
                 Console.WriteLine("Error: {0}", e.Message);
             }
         }
-        static void EncryptStringToBytes(string filjename, byte[] Key,byte[] IV, SymmetricAlgorithm symmetricAlgorithm ) 
+        static void EncryptStringToBytes(string filename, string encryptedFile, byte[] Key,byte[] IV, SymmetricAlgorithm symmetricAlgorithm ) 
         {
             // Check arguments.
             if (filename == null || filename.Length <= 0)
@@ -80,143 +92,54 @@ namespace Enigma
             if (IV == null || IV.Length <= 0)
                 throw new ArgumentNullException("Key");
             byte[] encrypted;
-            // Create an Aes object
-            // with the specified key and IV.
-            //using (Aes aesAlg = Aes.Create())
 
-                //symmetricAlgorithm.Key = Key;
-                //symmetricAlgorithm.IV = IV;
+            ICryptoTransform encryptor = symmetricAlgorithm.CreateEncryptor(symmetricAlgorithm.Key, symmetricAlgorithm.IV);
 
-                // Create a decrytor to perform the stream transform.
-                ICryptoTransform encryptor = symmetricAlgorithm.CreateEncryptor(symmetricAlgorithm.Key, symmetricAlgorithm.IV);
-
-                // Create the streams used for encryption.
-                //using (MemoryStream msEncrypt = new MemoryStream())
-                using (FileStream msEncrypt = File.Open(encryptedFile, FileMode.OpenOrCreate))
+            using (FileStream msEncrypt = File.Open(encryptedFile, FileMode.OpenOrCreate))
+            {
+                using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
                 {
-                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    using (FileStream fs = File.OpenRead(filename))
                     {
-                        //using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
-                        {
+                        fs.CopyTo(csEncrypt);
 
-                            //Write all data to the stream.
-                            using (FileStream fs = File.OpenRead(filename))
-                            {
-                                fs.CopyTo(csEncrypt);
+                    }
 
-                            /*
-                                byte[] b = new byte[256];
-                                UTF8Encoding temp = new UTF8Encoding(true);
-                                int got;
-
-                                while ((got = fs.Read(b, 0, b.Length)) > 0)
-                                {
-                                    swEncrypt.Write(temp.GetString(b, 0, got));
-                                    //Console.WriteLine(temp.GetString(b, 0, got));
-
-                                }
-                                */
-                            }
-                            //swEncrypt.Write(filename);
-                        }
-                    //csEncrypt.FlushFinalBlock();
-                    //encrypted = msEncrypt.ToArray();
-                    /*
-                        using (FileStream encryptedDataDFileStream = File.OpenWrite(encryptedFile))
-                        {
-                            encryptedDataDFileStream.Write(encrypted, 0, encrypted.Length);
-                        }
-                        */
                 }
-                    //msEncrypt.Close();
-                }
+            }
 
-
-
-            // Return the encrypted bytes from the memory stream.
             return ;
 
         }
 
-        static void DecryptStringFromBytes(string filename, byte[] Key, byte[] IV, SymmetricAlgorithm symmetricAlgorithm)
+        static void DecryptStringFromBytes(string encryptedFile, string outfile, byte[] Key, byte[] IV, SymmetricAlgorithm symmetricAlgorithm)
         {
             // Check arguments.
-            if (filename == null || filename.Length <= 0)
-                throw new ArgumentNullException("filename");
+            if (encryptedFile == null || encryptedFile.Length <= 0)
+                throw new ArgumentNullException("encryptedFile");
             if (Key == null || Key.Length <= 0)
                 throw new ArgumentNullException("Key");
             if (IV == null || IV.Length <= 0)
                 throw new ArgumentNullException("Key");
 
-
-            // Declare the string used to hold
-            // the decrypted text.
-            string plaintext = null;
-            byte[] outBytes = new byte[128];
-            int gotFromDecoder = 0;
-            int offset = 0;
-
-            // Create an Aes object
-            // with the specified key and IV.
-            //using (Aes aesAlg = Aes.Create())
-
             symmetricAlgorithm.Key = Key;
-                symmetricAlgorithm.IV = IV;
+            symmetricAlgorithm.IV = IV;
 
-                // Create a decrytor to perform the stream transform.
-                ICryptoTransform decryptor = symmetricAlgorithm.CreateDecryptor(symmetricAlgorithm.Key, symmetricAlgorithm.IV);
-
-            // Create the streams used for decryption.
+            ICryptoTransform decryptor = symmetricAlgorithm.CreateDecryptor(symmetricAlgorithm.Key, symmetricAlgorithm.IV);
 
             File.Delete(outfile);
 
-            // there some black magic figures
-
-            //using (MemoryStream msDecrypt = new MemoryStream(encryptedFile))
-            using (FileStream inputStream = File.Open(encryptedFile, FileMode.OpenOrCreate))
-            //using (FileStream outFileStream = File.OpenWrite(outfile))
+            using (FileStream inputStream = File.Open( encryptedFile, FileMode.OpenOrCreate))
             {
-                //using ( MemoryStream outFileStream = new MemoryStream())
                 using (CryptoStream csDecrypt = new CryptoStream(inputStream, decryptor, CryptoStreamMode.Read))
                 {
-
-                    //using (FileStream inputStream = File.OpenRead(encryptedFile))
-                    
                     using (FileStream outFileStream = File.Open(outfile, FileMode.OpenOrCreate))
                     {
-                        //using (StreamWriter srDecrypt = new StreamWriter(csDecrypt))
-                        {
-                            csDecrypt.CopyTo(outFileStream);
-                            //inputStream.CopyTo(csDecrypt);
-                            //csDecrypt.FlushFinalBlock();
-                            /*while ((gotFromDecoder = outFileStream.Read(outBytes, 0, 128)) > 0)
-                            {
-                                outFileStream.Write(outBytes, offset, gotFromDecoder);
-                                offset += gotFromDecoder;
-                            }*/
-
-
-                            // Read the decrypted bytes from the decrypting stream
-                            // and place them in a string.
-                            //plaintext = srDecrypt.ReadToEnd();
-
-                        }
-                        /*while ((gotFromDecoder = csDecrypt.Read(outBytes, 0, 128)) > 0)
-                    {
-                        outFileStream.Write(outBytes, offset, gotFromDecoder);
-                        offset += gotFromDecoder;
-                    }*/
+                        csDecrypt.CopyTo(outFileStream);
                     }
-                    //Console.Write(outFileStream.ToString());
-                    //csDecrypt.FlushFinalBlock();
-                }
-
-                
+                }                
             }
-
-
-            return ;
-
+            return ;    
         }
     }
 }

@@ -11,7 +11,9 @@ namespace Enigma
     {
         static void Main(string[] args)
         {
-            Encryptor.Encrypt();
+            //string[] argv = {"sam", "encrypt", "ToEncrypt.txt", "aes", "encrypted"};
+            //string[] argve = {"sam", "decrypt", "encrypted", "aes", "key.txt", "out.txt"};
+            Encryptor.Encrypt(args);
             System.Console.Read();
         }
     }
