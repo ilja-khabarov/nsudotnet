@@ -1,0 +1,10 @@
+c:\users\ilja\documents\visual studio 2015\Projects\Enigma\Enigma\bin\Debug\Enigma.exe.config
+c:\users\ilja\documents\visual studio 2015\Projects\Enigma\Enigma\bin\Debug\Enigma.exe
+c:\users\ilja\documents\visual studio 2015\Projects\Enigma\Enigma\bin\Debug\Enigma.pdb
+c:\users\ilja\documents\visual studio 2015\Projects\Enigma\Enigma\obj\Debug\Enigma.csprojResolveAssemblyReference.cache
+c:\users\ilja\documents\visual studio 2015\Projects\Enigma\Enigma\obj\Debug\Enigma.exe
+c:\users\ilja\documents\visual studio 2015\Projects\Enigma\Enigma\obj\Debug\Enigma.pdb
+C:\Users\ilja\Documents\GitHub\nsudotnet\Khabarov.Nsudotnet.Enigma\Enigma\bin\Debug\Enigma.exe.config
+C:\Users\ilja\Documents\GitHub\nsudotnet\Khabarov.Nsudotnet.Enigma\Enigma\obj\Debug\Enigma.exe
+C:\Users\ilja\Documents\GitHub\nsudotnet\Khabarov.Nsudotnet.Enigma\Enigma\obj\Debug\Enigma.pdb
+C:\Users\ilja\Documents\GitHub\nsudotnet\Khabarov.Nsudotnet.Enigma\Enigma\obj\Debug\Enigma.csprojResolveAssemblyReference.cache
